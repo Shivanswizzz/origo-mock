@@ -14,44 +14,91 @@ serve(async (req) => {
 
   try {
     const { userId1, userId2 } = await req.json()
-    
-    // In Phase 3, this will call the Python ML Service
-    // For Phase 2 MVP, we simulate a score based on random logic + mock interests
-    
+
+    // Initialize Supabase Client
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
-    
-    // Fetch user 1 interests
-    const { data: ints1 } = await supabase
-       .from('user_interests')
-       .select('interest_id')
-       .eq('user_id', userId1)
-       
-    // Fetch user 2 interests
-    const { data: ints2 } = await supabase
-       .from('user_interests')
-       .select('interest_id')
-       .eq('user_id', userId2)
-       
-    // Allow logic even if empty for demo
-    const arr1 = ints1?.map(x => x.interest_id) || []
-    const arr2 = ints2?.map(x => x.interest_id) || []
-    
-    const common = arr1.filter(id => arr2.includes(id)).length
-    const union = new Set([...arr1, ...arr2]).size
-    
-    let score = 50 // Base score
-    if (union > 0) {
-        score += (common / union) * 50
-    }
-    
-    // Add some randomness for "Vibe Check"
-    score = Math.min(Math.round(score + (Math.random() * 10)), 99)
 
+    // 1. Fetch Profiles for both users
+    const [user1Response, user2Response] = await Promise.all([
+      supabase.from('profiles').select('*').eq('id', userId1).single(),
+      supabase.from('profiles').select('*').eq('id', userId2).single()
+    ])
+
+    if (user1Response.error || user2Response.error) {
+      throw new Error(`Failed to fetch profiles: ${user1Response.error?.message || user2Response.error?.message}`)
+    }
+
+    const profile1: any = user1Response.data
+    const profile2: any = user2Response.data
+
+    // 2. Prepare Payload for Python ML Service
+    const payload = {
+      user1: {
+        user_id: profile1.id,
+        bio: profile1.bio,
+        gender: profile1.gender,
+        year_of_study: profile1.year_of_study,
+        date_of_birth: profile1.date_of_birth,
+        answers: profile1.onboarding_data || {},
+        dating_enabled: true
+      },
+      user2: {
+        user_id: profile2.id,
+        bio: profile2.bio,
+        gender: profile2.gender,
+        year_of_study: profile2.year_of_study,
+        date_of_birth: profile2.date_of_birth,
+        answers: profile2.onboarding_data || {},
+        dating_enabled: true
+      }
+    }
+
+    // 3. Call Python Service
+    // Use host.docker.internal to reach the host machine from Supabase Docker container
+    const mlServiceUrl = 'http://host.docker.internal:5000/api/ml/calculate-compatibility'
+    
+    let compatibilityScore = 0
+    
+    try {
+      console.log(`Calling ML Service at ${mlServiceUrl}...`);
+      const mlResponse = await fetch(mlServiceUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+
+      if (mlResponse.ok) {
+        const mlData = await mlResponse.json()
+        compatibilityScore = mlData.compatibility_score
+        console.log("ML Service Success:", compatibilityScore);
+      } else {
+        console.error('ML Service Error Status:', mlResponse.status);
+        throw new Error('ML Service returned non-200')
+      }
+    } catch (mlErr) {
+      console.warn('⚠️ ML Service unreachable. Using fallback logic.', mlErr)
+      
+      // FALLBACK LOGIC
+      // Safely extracting values
+      const getValues = (obj: any) => Object.values(obj || {}).flat().map(v => String(v));
+      
+      const set1 = new Set(getValues(profile1.onboarding_data));
+      const list2 = getValues(profile2.onboarding_data);
+      
+      const common = list2.filter(item => set1.has(item)).length
+      const union = new Set([...getValues(profile1.onboarding_data), ...list2]).size
+      
+      const jaccard = union === 0 ? 0 : (common / union)
+      // Generous scoring for demo
+      compatibilityScore = Math.min(Math.round((jaccard * 100) + 50 + (Math.random() * 10)), 95)
+    }
+
+    // 4. Return Score
     return new Response(
-      JSON.stringify({ compatibilityScore: score }),
+      JSON.stringify({ compatibilityScore }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 

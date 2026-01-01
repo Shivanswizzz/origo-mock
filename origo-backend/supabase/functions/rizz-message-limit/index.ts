@@ -15,10 +15,11 @@ serve(async (req) => {
   try {
     const { conversationId, senderId } = await req.json()
 
-    // Create client with Service Key to bypass RLS for checking counters
+    // Create client with context of the user (Pass Auth Header)
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } } }
     )
 
     // Get conversation details

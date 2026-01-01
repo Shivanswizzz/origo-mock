@@ -18,9 +18,10 @@ serve(async (req) => {
 
     const domain = email.split('@')[1]
     
+    // Use Anon Key (User context not strictly needed for public college list, but safer than failing service key)
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
     )
     
     // Check against colleges table

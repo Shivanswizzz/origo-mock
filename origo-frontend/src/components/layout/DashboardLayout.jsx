@@ -22,7 +22,7 @@ export function DashboardLayout({ children }) {
       {/* Sidebar */}
       <aside className="w-64 fixed h-screen border-r border-white/5 bg-bg-secondary/30 hidden lg:flex flex-col p-6 glass-card rounded-none">
         <Link to="/home" className="flex items-center gap-3 mb-10">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-primary-600 to-secondary-500 flex items-center justify-center font-bold text-white shadow-lg shadow-primary-600/20">O</div>
+          <img src="https://i.ibb.co/hRpM4cb6/Whats-App-Image-2025-12-24-at-8-54-34-PM.jpg" alt="Origo" className="w-8 h-8 rounded-lg object-cover" />
           <span className="text-xl font-bold tracking-tight">Origo</span>
         </Link>
 

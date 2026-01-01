@@ -21,22 +21,47 @@ export default function DiscoverPage() {
   const fetchProfiles = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('profiles')
-        .select(`
-          *,
-          college:colleges(name)
-        `)
-        .eq('is_verified', true)
-        .limit(20);
+      // V1: Call Heuristic Engine
+      const { data, error } = await supabase.rpc('get_scored_matches_v1', { limit_count: 20 });
 
       if (error) throw error;
-      setProfiles(data || []);
+      
+      // Transform Data: invalid "user_data" jsonb needs to be flattened
+      const formattedData = (data || []).map(item => ({
+        ...item.user_data,
+        match_score: item.score_data,
+        // Ensure college is structured as expected if RPC returns it differently, 
+        // but user_data is just the profile row. 
+        // Note: RPC "get_candidates_v1" returns "profiles". "profiles" doesn't strictly include the join "college:colleges(name)".
+        // We might need to fetch college name separately or update RPC to include it.
+        // For MVP, if college_id is there, we assume we might miss the name for a moment unless we join in RPC.
+      }));
+      
+      setProfiles(formattedData);
+      
+      // Log Views (Async)
+      formattedData.forEach(p => {
+        logProfileView(p.id);
+      });
+
     } catch (error) {
-       console.error('Error fetching profiles', error);
+       console.error('Error fetching matches', error);
        toast.error('Failed to load matches');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const logProfileView = async (targetId) => {
+    try {
+      await supabase.from('analytics_profile_views').insert({
+        viewer_id: (await supabase.auth.getUser()).data.user?.id,
+        viewed_id: targetId,
+        metadata: { source: 'discover_feed' }
+      });
+    } catch (err) {
+      // Fail silently for logging
+      console.warn('Log failed', err);
     }
   };
 
@@ -81,7 +106,7 @@ export default function DiscoverPage() {
                 <div className="relative h-64 overflow-hidden">
                   <img src={profile.profile_photo_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.id}`} alt={profile.full_name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                   <div className="absolute top-3 right-3 bg-black/40 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 flex items-center gap-1 text-sm font-bold text-green-400">
-                    {90 + (idx % 10)}% Match
+                    {profile.match_score?.total_score || 85}% Match
                   </div>
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-100" />
                   <div className="absolute bottom-4 left-4 text-white">

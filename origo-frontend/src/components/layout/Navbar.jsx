@@ -23,9 +23,7 @@ export function Navbar() {
         
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 group">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-primary-600 to-secondary-500 flex items-center justify-center shadow-lg shadow-primary-600/20 group-hover:scale-105 transition-transform">
-            <span className="text-white font-bold text-xl">O</span>
-          </div>
+          <img src="https://i.ibb.co/hRpM4cb6/Whats-App-Image-2025-12-24-at-8-54-34-PM.jpg" alt="Origo" className="w-10 h-10 rounded-xl object-cover shadow-lg shadow-primary-600/20 group-hover:scale-105 transition-transform" />
           <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70">Origo</span>
         </Link>
 

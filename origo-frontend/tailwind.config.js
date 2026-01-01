@@ -8,12 +8,12 @@ export default {
     extend: {
       colors: {
         primary: {
-          600: '#6366f1', // Indigo
-          700: '#4f46e5',
+          600: '#0ea5e9', // Sky 500 (Brighter)
+          700: '#0284c7', // Sky 600
         },
         secondary: {
-          500: '#8b5cf6', // Violet
-          600: '#7c3aed',
+          500: '#06b6d4', // Cyan 500
+          600: '#0891b2', // Cyan 600
         },
         bg: {
           primary: '#0f172a',   // Slate 900
