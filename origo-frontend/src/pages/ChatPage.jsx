@@ -4,7 +4,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { ArrowLeft, Send, Sparkles, Lock, MoreVertical } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { supabase } from '../lib/supabase';
+import { MOCK_PROFILES } from '../data/mockData';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
 
@@ -43,79 +43,18 @@ export default function ChatPage() {
   const initializeChat = async () => {
       try {
           setLoading(true);
-          // 1. Fetch Target Profile
-          const { data: profile } = await supabase.from('profiles').select('*').eq('id', targetUserId).single();
+          // HARDCODED DEMO: Find target profile in mock data
+          const profile = MOCK_PROFILES.find(p => p.id === targetUserId);
           setTargetProfile(profile);
 
-          // 2. Fetch or Create Conversation
-          // Note: Logic assumes user_id_1 < user_id_2 constraint. Sorting IDs.
-          const [id1, id2] = [user.id, targetUserId].sort();
+          setConversation({
+              id: 'mock_conv',
+              is_rizz_active: true,
+              messages_sent_by_user1: 0
+          });
           
-          let { data: conv, error } = await supabase
-            .from('conversations')
-            .select('*')
-            .eq('user_id_1', id1)
-            .eq('user_id_2', id2)
-            .maybeSingle(); // Use maybeSingle to avoid 406 if not found
-
-          if (!conv) {
-              // Creating a new conversation implicitly happens here or we can just proceed.
-              // We'll create it when the first message is sent to avoid empty convos, 
-              // OR create it now for simplicity. Let's create it now to track rizz status.
-              const { data: newConv, error: createError } = await supabase
-                .from('conversations')
-                .insert({ user_id_1: id1, user_id_2: id2 })
-                .select()
-                .single();
-              
-              if (createError) throw createError;
-              conv = newConv;
-          }
-          
-          setConversation(conv);
-          
-          // 3. Calc messages left
-          const sentCount = user.id === conv.user_id_1 ? conv.messages_sent_by_user1 : conv.messages_sent_by_user2;
-          // Check if rizz is active. If active, limit is 5. If inactive (matched/unlocked), limit is infinity (handled by UI logic)
-          setMessagesLeft(conv.is_rizz_active ? (5 - sentCount) : 9999);
-
-          // 4. Fetch Messages
-          const { data: msgs } = await supabase
-            .from('messages')
-            .select('*')
-            .eq('conversation_id', conv.id)
-            .order('sent_at', { ascending: true });
-            
-          setMessages(msgs || []);
-
-          // 5. Subscribe to Realtime
-          const channel = supabase
-            .channel(`chat:${conv.id}`)
-            .on('postgres_changes', { 
-                event: 'INSERT', 
-                schema: 'public', 
-                table: 'messages', 
-                filter: `conversation_id=eq.${conv.id}` 
-            }, (payload) => {
-                setMessages(prev => [...prev, payload.new]);
-                // If message is from OTHER person, we might want to update read status etc.
-            })
-            .on('postgres_changes', {
-                event: 'UPDATE',
-                schema: 'public',
-                table: 'conversations',
-                filter: `id=eq.${conv.id}`
-            }, (payload) => {
-                const updatedConv = payload.new;
-                setConversation(updatedConv);
-                const count = user.id === updatedConv.user_id_1 ? updatedConv.messages_sent_by_user1 : updatedConv.messages_sent_by_user2;
-                setMessagesLeft(updatedConv.is_rizz_active ? (5 - count) : 9999);
-            })
-            .subscribe();
-
-            return () => {
-                supabase.removeChannel(channel);
-            };
+          setMessagesLeft(5);
+          setMessages([]);
 
       } catch (err) {
           console.error("Chat Init Error:", err);
@@ -128,30 +67,28 @@ export default function ChatPage() {
   const handleSend = async () => {
     if (!inputText.trim() || !conversation) return;
     
-    // Optimistic UI update? No, let's rely on realtime for consistency or local append + replace
-    // For smoothness, we can append locally with a 'pending' state, but for now simple await.
+    // HARDCODED DEMO: Optimistic update and mock reply
+    const newMsg = {
+        id: Date.now(),
+        sender_id: user.id,
+        content: inputText.trim(),
+        sent_at: new Date().toISOString()
+    };
 
-    try {
-        const { error } = await supabase
-            .from('messages')
-            .insert({
-                conversation_id: conversation.id,
-                sender_id: user.id,
-                content: inputText.trim()
-            });
+    setMessages(prev => [...prev, newMsg]);
+    setInputText("");
+    setMessagesLeft(prev => prev - 1);
 
-        if (error) {
-            // Trigger or RLS failure
-            toast.error(error.message || "Failed to send");
-            return;
-        }
-
-        setInputText("");
-        setShowIcebreakers(false);
-    } catch (err) {
-        console.error("Send Error:", err);
-        toast.error(err.message);
-    }
+    // Mock response after 2 seconds
+    setTimeout(() => {
+        const reply = {
+            id: Date.now() + 1,
+            sender_id: targetUserId,
+            content: "That's so interesting! I'd love to hear more about that. 😊",
+            sent_at: new Date().toISOString()
+        };
+        setMessages(prev => [...prev, reply]);
+    }, 2000);
   };
 
   const useIcebreaker = (text) => {

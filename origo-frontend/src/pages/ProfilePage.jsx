@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Button } from '../components/ui/Button';
 import { Settings, MapPin, Calendar, Edit3, Loader } from 'lucide-react';
+import { MOCK_USER } from '../data/mockData';
 import { useAuth } from '../context/AuthContext';
-import { supabase } from '../lib/supabase';
 import { Link } from 'react-router-dom';
 
 export default function ProfilePage() {
@@ -12,29 +12,10 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchProfile() {
-      if (!user) return;
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select(`
-            *,
-            colleges (name)
-          `)
-          .eq('id', user.id)
-          .single();
-
-        if (error) throw error;
-        setProfile(data);
-      } catch (error) {
-        console.error('Error fetching profile:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchProfile();
-  }, [user]);
+    // HARDCODED DEMO: Always use mock user
+    setProfile(MOCK_USER);
+    setLoading(false);
+  }, []);
 
   if (loading) {
     return (

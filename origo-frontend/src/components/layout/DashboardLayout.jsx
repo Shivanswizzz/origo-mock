@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Home, Search, MessageCircle, Users, Calendar, Settings, LogOut, Zap, Heart } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../ui/Button';
@@ -6,6 +6,7 @@ import { Button } from '../ui/Button';
 export function DashboardLayout({ children }) {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const navItems = [
     { icon: Home, label: 'Home', path: '/home' },
@@ -28,12 +29,16 @@ export function DashboardLayout({ children }) {
 
         {/* User Card */}
         <div className="flex items-center gap-3 mb-8 p-3 rounded-xl bg-white/5 border border-white/5">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-700 to-gray-600 flex items-center justify-center text-sm font-medium">
-             {user?.name?.charAt(0) || 'U'}
+          <div className="w-10 h-10 rounded-full border border-white/10 overflow-hidden bg-gradient-to-br from-gray-700 to-gray-600 flex items-center justify-center text-sm font-medium">
+             {user?.profile_photo_url ? (
+               <img src={user.profile_photo_url} alt="" className="w-full h-full object-cover" />
+             ) : (
+               user?.full_name?.charAt(0) || user?.name?.charAt(0) || 'U'
+             )}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">{user?.name || 'Student'}</p>
-            <p className="text-xs text-text-tertiary truncate">{user?.college || 'University'}</p>
+            <p className="text-sm font-medium truncate">{user?.full_name || user?.name || 'Student'}</p>
+            <p className="text-xs text-text-tertiary truncate">{user?.college?.name || user?.college || 'University'}</p>
           </div>
         </div>
 
@@ -65,7 +70,10 @@ export function DashboardLayout({ children }) {
         </div>
 
         <button 
-          onClick={logout} 
+          onClick={async () => {
+            await logout();
+            navigate('/');
+          }} 
           className="flex items-center gap-3 px-4 py-2 text-sm text-text-tertiary hover:text-red-400 transition-colors"
         >
           <LogOut size={18} />

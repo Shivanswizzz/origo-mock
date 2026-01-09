@@ -2,11 +2,7 @@ import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const THREADS = [
-  { id: 1, name: "Aanya", lastMsg: "See you at the fest! 🎉", time: "2m", unread: 2, online: true, img: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=100" },
-  { id: 2, name: "Tech Society", lastMsg: "Reminder: Meeting at 5 PM", time: "1h", unread: 0, group: true, img: "" },
-  { id: 3, name: "Kabir", lastMsg: "Bro, did you check the notes?", time: "3h", unread: 0, online: false, img: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=100" },
-];
+import { MOCK_THREADS } from '../data/mockData';
 
 export default function MessagesPage() {
   const navigate = useNavigate();
@@ -29,7 +25,7 @@ export default function MessagesPage() {
           </div>
 
           <div className="flex-1 overflow-y-auto">
-            {THREADS.map(thread => (
+            {MOCK_THREADS.map(thread => (
               <div 
                 key={thread.id} 
                 onClick={() => navigate(`/chat/${thread.id}`)}

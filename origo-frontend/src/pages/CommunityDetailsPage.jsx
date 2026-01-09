@@ -2,9 +2,19 @@ import { useParams } from 'react-router-dom';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Button } from '../components/ui/Button';
 import { Users, MoreHorizontal } from 'lucide-react';
+import { MOCK_COMMUNITIES } from '../data/mockData';
+import { useState, useEffect } from 'react';
 
 export default function CommunityDetailsPage() {
   const { id } = useParams();
+  const [community, setCommunity] = useState(null);
+  
+  useEffect(() => {
+    const found = MOCK_COMMUNITIES.find(c => c.id === parseInt(id)) || MOCK_COMMUNITIES[0];
+    setCommunity(found);
+  }, [id]);
+
+  if (!community) return null;
   
   return (
     <DashboardLayout>
@@ -12,8 +22,9 @@ export default function CommunityDetailsPage() {
          {/* Cover */}
          <div className="h-48 bg-gradient-to-r from-blue-900 to-indigo-900 relative">
            <img 
-             src="https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&q=80&w=1200" 
+             src={community.img} 
              className="w-full h-full object-cover opacity-60" 
+             alt={community.name}
            />
          </div>
 
@@ -25,9 +36,9 @@ export default function CommunityDetailsPage() {
                <div className="flex-1">
                  <div className="flex justify-between items-start">
                     <div>
-                      <h1 className="text-3xl font-bold mb-1">Tech Enthusiasts</h1>
+                      <h1 className="text-3xl font-bold mb-1">{community.name}</h1>
                       <div className="flex items-center gap-2 text-text-tertiary text-sm">
-                        <Users size={14} /> 1,200 Members • Public Group
+                        <Users size={14} /> {community.members} Members • Public Group
                       </div>
                     </div>
                     <Button>Join Community</Button>

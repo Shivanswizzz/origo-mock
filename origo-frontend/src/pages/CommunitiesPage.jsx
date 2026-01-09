@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Button } from '../components/ui/Button';
 import { Users, Search, Plus } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { MOCK_COMMUNITIES } from '../data/mockData';
 import { motion } from 'framer-motion';
 
 export default function CommunitiesPage() {
@@ -12,16 +12,14 @@ export default function CommunitiesPage() {
   useEffect(() => {
     async function fetchCommunities() {
       try {
-        const { data, error } = await supabase
-          .from('communities')
-          .select('*')
-          .order('member_count', { ascending: false });
-
-        if (error) throw error;
-        setCommunities(data || []);
+        setLoading(true);
+        // HARDCODED DEMO: Use mock communities
+        setTimeout(() => {
+          setCommunities(MOCK_COMMUNITIES);
+          setLoading(false);
+        }, 600);
       } catch (error) {
         console.error('Error fetching communities:', error);
-      } finally {
         setLoading(false);
       }
     }
@@ -78,8 +76,8 @@ export default function CommunitiesPage() {
                 className="glass-card rounded-2xl overflow-hidden hover:border-primary-500/50 transition-colors group"
               >
                 <div className="h-32 bg-gray-800 relative">
-                   {community.image_url ? (
-                      <img src={community.image_url} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" alt={community.name} />
+                   {community.img ? (
+                      <img src={community.img} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" alt={community.name} />
                    ) : (
                       <div className="w-full h-full bg-gradient-to-br from-primary-900/50 to-secondary-900/50" />
                    )}
@@ -97,7 +95,7 @@ export default function CommunitiesPage() {
                    <div className="flex items-center justify-between mt-auto">
                       <div className="flex items-center gap-2 text-text-tertiary text-sm">
                          <Users size={16} />
-                         <span>{community.member_count || 0} members</span>
+                         <span>{community.members || 0} members</span>
                       </div>
                       <Button size="sm" variant="outline">Join</Button>
                    </div>

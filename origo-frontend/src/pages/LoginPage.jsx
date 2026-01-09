@@ -29,7 +29,7 @@ export default function LoginPage() {
       setError('');
       await login(data.email, data.password);
       toast.success('Welcome back!');
-      navigate('/home');
+      navigate('/onboarding');
     } catch (err) {
       console.error(err);
       setError(err.message || 'Invalid credentials');

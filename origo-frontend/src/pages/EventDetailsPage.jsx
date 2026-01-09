@@ -2,27 +2,38 @@ import { useParams } from 'react-router-dom';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Button } from '../components/ui/Button';
 import { Calendar, MapPin, Ticket, Share2 } from 'lucide-react';
+import { MOCK_EVENTS } from '../data/mockData';
+import { useState, useEffect } from 'react';
 
 export default function EventDetailsPage() {
   const { id } = useParams();
+  const [event, setEvent] = useState(null);
+
+  useEffect(() => {
+    const found = MOCK_EVENTS.find(e => e.id === parseInt(id)) || MOCK_EVENTS[0];
+    setEvent(found);
+  }, [id]);
+
+  if (!event) return null;
 
   return (
     <DashboardLayout>
        <div className="relative h-[50vh]">
           <img 
-            src="https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&q=80&w=1200" 
+            src={event.img || "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&q=80&w=1200"} 
             className="w-full h-full object-cover"
+            alt={event.title}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-bg-primary via-bg-primary/50 to-transparent" />
           
           <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10 container mx-auto">
              <div className="flex flex-col md:flex-row items-end justify-between gap-6">
                 <div>
-                  <span className="px-3 py-1 rounded-lg bg-pink-500 text-white text-xs font-bold mb-3 inline-block">PARTY</span>
-                  <h1 className="text-4xl md:text-6xl font-bold mb-4">Neon Night 2025</h1>
+                  <span className="px-3 py-1 rounded-lg bg-pink-500 text-white text-xs font-bold mb-3 inline-block">CAMPUSEVENT</span>
+                  <h1 className="text-4xl md:text-6xl font-bold mb-4">{event.title}</h1>
                   <div className="flex flex-wrap gap-6 text-lg text-text-secondary">
-                     <div className="flex items-center gap-2"><Calendar className="text-primary-400" /> Jan 1, 2025 • 8:00 PM</div>
-                     <div className="flex items-center gap-2"><MapPin className="text-primary-400" /> Student Center</div>
+                     <div className="flex items-center gap-2"><Calendar className="text-primary-400" /> {event.date}</div>
+                     <div className="flex items-center gap-2"><MapPin className="text-primary-400" /> {event.location}</div>
                   </div>
                 </div>
                 
@@ -43,8 +54,7 @@ export default function EventDetailsPage() {
              <section>
                <h2 className="text-2xl font-bold mb-4">About Event</h2>
                <p className="text-text-secondary leading-relaxed space-y-4">
-                 Get ready for the biggest glow-in-the-dark party of the year! DJ Snake (not really) will be spinning tracks all night.
-                 Wear white or neon colors to glow under the UV lights. Free drinks for the first 50 entries.
+                 {event.description || "Join us for this exciting campus event! Connect with fellow students and enjoy a great time."}
                </p>
              </section>
           </div>

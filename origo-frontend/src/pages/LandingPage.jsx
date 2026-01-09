@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Button } from '../components/ui/Button';
+import { Link } from 'react-router-dom';
 import { MainLayout } from '../components/layout/MainLayout';
 import { Shield, Sparkles, MessageCircle, Heart, Users, Lock, ChevronRight, GraduationCap } from 'lucide-react';
 import CountUp from 'react-countup';
@@ -54,7 +55,9 @@ export default function LandingPage() {
               transition={{ delay: 0.3 }}
               className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
             >
-              <Button size="lg" className="text-lg px-8">Get Started Free</Button>
+              <Link to="/signup">
+                <Button size="lg" className="text-lg px-8 w-full sm:w-auto">Get Started Free</Button>
+              </Link>
               <Button size="lg" variant="ghost" className="text-lg">How It Works</Button>
             </motion.div>
 

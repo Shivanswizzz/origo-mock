@@ -4,7 +4,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Search, Heart, Link as LinkIcon, Lock, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { supabase } from '../lib/supabase';
+import { MOCK_PROFILES, MOCK_SHIPS } from '../data/mockData';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
 
@@ -27,49 +27,32 @@ export default function ShippingPage() {
   const [loading, setLoading] = useState(false);
 
   // Debounced search (simplification: direct call for now)
+  // HARDCODED DEMO: Search mock profiles
   const searchUsers = async (query, setResults) => {
       if (!query || query.length < 2) {
           setResults([]);
           return;
       }
-      const { data } = await supabase
-        .from('profiles')
-        .select('id, full_name, profile_photo_url, college:colleges(name)')
-        .ilike('full_name', `%${query}%`)
-        .limit(5);
-      setResults(data || []);
+      const filtered = MOCK_PROFILES.filter(u => 
+        u.full_name.toLowerCase().includes(query.toLowerCase())
+      ).slice(0, 5);
+      setResults(filtered);
   };
 
   const handleShip = async () => {
     if (!personA || !personB) return;
     setLoading(true);
     
-    try {
-        // Insert ship Record
-        // In real app, this initiates a payment flow first.
-        // Assuming 'pending' status until paid, or assuming free for this MVP step.
-        const { error } = await supabase.from('ships').insert({
-            shipper_id: user.id,
-            user_id_1: personA.id,
-            user_id_2: personB.id,
-            reason: reason,
-            status: 'pending' // pending payment or revelation
-        });
-
-        if (error) throw error;
-        
+    // HARDCODED DEMO: Simulate success
+    setTimeout(() => {
         toast.success(`You shipped ${personA.full_name} and ${personB.full_name}!`);
         setPersonA(null);
         setPersonB(null);
         setQueryA('');
         setQueryB('');
         setReason('');
-
-    } catch (err) {
-        toast.error(err.message || 'Failed to ship');
-    } finally {
         setLoading(false);
-    }
+    }, 1000);
   };
 
   return (
@@ -230,20 +213,23 @@ export default function ShippingPage() {
             <div className="glass-card p-6 rounded-3xl">
                <h3 className="font-bold mb-4">Your Active Ships</h3>
                <div className="space-y-4">
-                  <div className="p-3 bg-white/5 rounded-xl flex items-center justify-between border border-white/5">
-                     <div className="flex -space-x-2">
-                        <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=50" className="w-8 h-8 rounded-full border-2 border-bg-secondary" />
-                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=50" className="w-8 h-8 rounded-full border-2 border-bg-secondary" />
-                     </div>
-                     <span className="text-xs font-bold text-yellow-400">Pending</span>
-                  </div>
-                  <div className="p-3 bg-white/5 rounded-xl flex items-center justify-between border border-white/5">
-                     <div className="flex -space-x-2">
-                        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=50" className="w-8 h-8 rounded-full border-2 border-bg-secondary" />
-                        <img src="https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&q=80&w=50" className="w-8 h-8 rounded-full border-2 border-bg-secondary" />
-                     </div>
-                     <span className="text-xs font-bold text-green-400">Matched! 🎉</span>
-                  </div>
+                  {MOCK_SHIPS.map(ship => (
+                    <div key={ship.id} className="p-3 bg-white/5 rounded-xl flex items-center justify-between border border-white/5">
+                       <div className="flex items-center gap-3">
+                          <div className="flex -space-x-2">
+                             <img src={ship.user1.profile_photo_url} className="w-8 h-8 rounded-full border-2 border-bg-secondary" />
+                             <img src={ship.user2.profile_photo_url} className="w-8 h-8 rounded-full border-2 border-bg-secondary" />
+                          </div>
+                          <div>
+                            <p className="text-xs font-medium text-white">{ship.user1.full_name} & {ship.user2.full_name}</p>
+                            <p className="text-[10px] text-text-tertiary line-clamp-1">{ship.reason}</p>
+                          </div>
+                       </div>
+                       <span className={`text-xs font-bold ${ship.status.includes('Matched') ? 'text-green-400' : 'text-yellow-400'}`}>
+                         {ship.status}
+                       </span>
+                    </div>
+                  ))}
                </div>
                <Button variant="ghost" className="w-full mt-4 text-xs">View History</Button>
             </div>

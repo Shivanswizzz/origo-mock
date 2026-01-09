@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Button } from '../components/ui/Button';
 import { Calendar as CalendarIcon, MapPin, Clock } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { MOCK_EVENTS } from '../data/mockData';
 import { motion } from 'framer-motion';
 
 export default function EventsPage() {
@@ -12,17 +12,14 @@ export default function EventsPage() {
   useEffect(() => {
     async function fetchEvents() {
       try {
-        const { data, error } = await supabase
-          .from('events')
-          .select('*, communities(name, image_url)')
-          .gte('event_date', new Date().toISOString()) // Only future events
-          .order('event_date', { ascending: true });
-
-        if (error) throw error;
-        setEvents(data || []);
+        setLoading(true);
+        // HARDCODED DEMO: Use mock events
+        setTimeout(() => {
+          setEvents(MOCK_EVENTS);
+          setLoading(false);
+        }, 500);
       } catch (error) {
         console.error('Error fetching events:', error);
-      } finally {
         setLoading(false);
       }
     }
@@ -59,10 +56,10 @@ export default function EventsPage() {
                   {/* Date Badge */}
                   <div className="flex-shrink-0 w-full md:w-24 h-24 bg-white/5 rounded-xl flex flex-col items-center justify-center border border-white/10 group-hover:border-primary-500/50 transition-colors">
                       <span className="text-sm text-primary-400 font-bold uppercase">
-                          {new Date(event.event_date).toLocaleString('default', { month: 'short' })}
+                          {event.date.split(' ')[0]}
                       </span>
                       <span className="text-3xl font-bold">
-                          {new Date(event.event_date).getDate()}
+                          {event.date.split(' ')[1].replace(',', '')}
                       </span>
                   </div>
 
@@ -71,7 +68,7 @@ export default function EventsPage() {
                           <div>
                              <h3 className="text-xl font-bold mb-2 group-hover:text-primary-400 transition-colors">{event.title}</h3>
                              <p className="text-text-secondary text-sm mb-3">
-                                Hosted by {event.communities?.name || 'Students'}
+                                {event.attendees} students attending
                              </p>
                           </div>
                           {event.is_paid && (
@@ -84,7 +81,7 @@ export default function EventsPage() {
                       <div className="flex flex-wrap gap-4 text-sm text-text-tertiary">
                           <div className="flex items-center gap-1">
                              <Clock size={14} />
-                             {new Date(event.event_date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                             {event.date.split(', ')[1]}
                           </div>
                           <div className="flex items-center gap-1">
                              <MapPin size={14} />

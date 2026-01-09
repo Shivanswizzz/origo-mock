@@ -5,7 +5,7 @@ import { Input } from '../components/ui/Input';
 import { Search, Filter, MessageCircle, Sparkles, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { MOCK_PROFILES } from '../data/mockData';
 import { toast } from 'react-hot-toast';
 
 export default function DiscoverPage() {
@@ -21,49 +21,19 @@ export default function DiscoverPage() {
   const fetchProfiles = async () => {
     try {
       setLoading(true);
-      // V1: Call Heuristic Engine
-      const { data, error } = await supabase.rpc('get_scored_matches_v1', { limit_count: 20 });
-
-      if (error) throw error;
-      
-      // Transform Data: invalid "user_data" jsonb needs to be flattened
-      const formattedData = (data || []).map(item => ({
-        ...item.user_data,
-        match_score: item.score_data,
-        // Ensure college is structured as expected if RPC returns it differently, 
-        // but user_data is just the profile row. 
-        // Note: RPC "get_candidates_v1" returns "profiles". "profiles" doesn't strictly include the join "college:colleges(name)".
-        // We might need to fetch college name separately or update RPC to include it.
-        // For MVP, if college_id is there, we assume we might miss the name for a moment unless we join in RPC.
-      }));
-      
-      setProfiles(formattedData);
-      
-      // Log Views (Async)
-      formattedData.forEach(p => {
-        logProfileView(p.id);
-      });
+      // HARDCODED DEMO: Use mock profiles
+      setTimeout(() => {
+        setProfiles(MOCK_PROFILES);
+        setLoading(false);
+      }, 800);
 
     } catch (error) {
        console.error('Error fetching matches', error);
        toast.error('Failed to load matches');
-    } finally {
-      setLoading(false);
+       setLoading(false);
     }
   };
 
-  const logProfileView = async (targetId) => {
-    try {
-      await supabase.from('analytics_profile_views').insert({
-        viewer_id: (await supabase.auth.getUser()).data.user?.id,
-        viewed_id: targetId,
-        metadata: { source: 'discover_feed' }
-      });
-    } catch (err) {
-      // Fail silently for logging
-      console.warn('Log failed', err);
-    }
-  };
 
   return (
     <DashboardLayout>

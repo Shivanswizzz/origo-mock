@@ -262,50 +262,15 @@ export default function OnboardingPage() {
   };
 
   const finishOnboarding = async () => {
-    if (!user) return;
     setIsSubmitting(true);
     const toastId = toast.loading('Creating your AI Profile...');
 
     try {
-      // 1. Update Profile (Basic Info + Onboarding Data JSON)
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          bio: basicInfo.bio,
-          gender: basicInfo.gender,
-          year_of_study: parseInt(basicInfo.year_of_study),
-          onboarding_data: answers, // Save all answers here
-          is_verified: false, // Pending college email verify
-          updated_at: new Date()
-        })
-        .eq('id', user.id);
-
-      if (profileError) throw profileError;
-
-      // 2. Trigger ML Embedding Generation (Ideally via Edge Function, here simplified)
-      // Note: In production, Supabase Trigger would call the Python Service.
-      // For now, we assume the Python Service can be called or runs on a schedule.
-      // Example call to our Python Service (if accessible):
-      try {
-         await fetch('http://localhost:5000/api/ml/generate-embedding', {
-             method: 'POST',
-             headers: { 'Content-Type': 'application/json' },
-             body: JSON.stringify({ 
-                 user_id: user.id,
-                 user_data: { 
-                    ...basicInfo, 
-                    answers: answers,
-                    user_id: user.id 
-                 } 
-             })
-         });
-      } catch (mlErr) {
-          console.error("ML Service connect failed (expected if local):", mlErr);
-          // Don't block user flow if ML service is down
-      }
-
-      toast.success('Profile setup complete!', { id: toastId });
-      navigate('/home');
+      // HARDCODED DEMO: Simulate success
+      setTimeout(() => {
+        toast.success('Profile setup complete!', { id: toastId });
+        navigate('/home');
+      }, 1500);
 
     } catch (error) {
       console.error('Onboarding Error:', error);
